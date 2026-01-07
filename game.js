@@ -1,49 +1,58 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
+// Ajustar canvas ao tamanho da tela
+function resize() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
 // Player
 const player = {
-  x: 180,
-  y: 180,
+  x: 100,
+  y: 100,
   size: 40,
-  speed: 3
+  speed: 4
 };
 
-// Teclado
+// ==================
+// TECLADO
+// ==================
 const keys = {};
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-// Joystick
+// ==================
+// JOYSTICK
+// ==================
 const base = document.getElementById("joystick-base");
 const stick = document.getElementById("joystick-stick");
 const toggleBtn = document.getElementById("toggle");
 
 let joystickEnabled = true;
+let joystickActive = false;
+let joyX = 0;
+let joyY = 0;
+const maxDist = 40;
 
-let joystick = {
-  active: false,
-  dx: 0,
-  dy: 0
-};
-
-const maxDistance = 40;
-
-// Toggle joystick
-toggleBtn.addEventListener("click", () => {
+// Botão ON/OFF
+toggleBtn.onclick = () => {
   joystickEnabled = !joystickEnabled;
   base.classList.toggle("hidden", !joystickEnabled);
   toggleBtn.textContent = joystickEnabled ? "Joystick: ON" : "Joystick: OFF";
-  joystick.dx = joystick.dy = 0;
+  joyX = joyY = 0;
+};
+
+// Touch joystick
+base.addEventListener("touchstart", e => {
+  joystickActive = true;
+  e.preventDefault();
 });
 
-// Joystick events
-base.addEventListener("touchstart", () => joystick.active = true);
-base.addEventListener("touchmove", moveJoystick);
-base.addEventListener("touchend", endJoystick);
-
-function moveJoystick(e) {
-  if (!joystick.active || !joystickEnabled) return;
+base.addEventListener("touchmove", e => {
+  if (!joystickActive || !joystickEnabled) return;
 
   const touch = e.touches[0];
   const rect = base.getBoundingClientRect();
@@ -51,25 +60,27 @@ function moveJoystick(e) {
   const x = touch.clientX - rect.left - rect.width / 2;
   const y = touch.clientY - rect.top - rect.height / 2;
 
-  const distance = Math.min(maxDistance, Math.hypot(x, y));
+  const dist = Math.min(maxDist, Math.hypot(x, y));
   const angle = Math.atan2(y, x);
 
-  joystick.dx = Math.cos(angle) * (distance / maxDistance);
-  joystick.dy = Math.sin(angle) * (distance / maxDistance);
+  joyX = Math.cos(angle) * (dist / maxDist);
+  joyY = Math.sin(angle) * (dist / maxDist);
 
   stick.style.transform =
-    `translate(${joystick.dx * maxDistance}px, ${joystick.dy * maxDistance}px)`;
-}
+    `translate(${joyX * maxDist}px, ${joyY * maxDist}px)`;
+});
 
-function endJoystick() {
-  joystick.active = false;
-  joystick.dx = joystick.dy = 0;
+base.addEventListener("touchend", () => {
+  joystickActive = false;
+  joyX = joyY = 0;
   stick.style.transform = "translate(-50%, -50%)";
-}
+});
 
-// Update
+// ==================
+// GAME LOOP
+// ==================
 function update() {
-  // WASD + Setas
+  // Teclado
   if (keys["w"] || keys["arrowup"]) player.y -= player.speed;
   if (keys["s"] || keys["arrowdown"]) player.y += player.speed;
   if (keys["a"] || keys["arrowleft"]) player.x -= player.speed;
@@ -77,8 +88,8 @@ function update() {
 
   // Joystick
   if (joystickEnabled) {
-    player.x += joystick.dx * player.speed;
-    player.y += joystick.dy * player.speed;
+    player.x += joyX * player.speed;
+    player.y += joyY * player.speed;
   }
 
   // Limites
@@ -86,14 +97,12 @@ function update() {
   player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 }
 
-// Draw
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = "blue";
   ctx.fillRect(player.x, player.y, player.size, player.size);
 }
 
-// Loop
 function loop() {
   update();
   draw();
