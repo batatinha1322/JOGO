@@ -1,7 +1,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// Ajustar canvas ao tamanho da tela
+// Ajustar canvas
 function resize() {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -17,16 +17,12 @@ const player = {
   speed: 4
 };
 
-// ==================
-// TECLADO
-// ==================
+// Teclado
 const keys = {};
 document.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 document.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
 
-// ==================
-// JOYSTICK
-// ==================
+// Joystick
 const base = document.getElementById("joystick-base");
 const stick = document.getElementById("joystick-stick");
 const toggleBtn = document.getElementById("toggle");
@@ -37,7 +33,7 @@ let joyX = 0;
 let joyY = 0;
 const maxDist = 40;
 
-// Botão ON/OFF
+// Toggle
 toggleBtn.onclick = () => {
   joystickEnabled = !joystickEnabled;
   base.classList.toggle("hidden", !joystickEnabled);
@@ -76,23 +72,18 @@ base.addEventListener("touchend", () => {
   stick.style.transform = "translate(-50%, -50%)";
 });
 
-// ==================
-// GAME LOOP
-// ==================
+// Game loop
 function update() {
-  // Teclado
   if (keys["w"] || keys["arrowup"]) player.y -= player.speed;
   if (keys["s"] || keys["arrowdown"]) player.y += player.speed;
   if (keys["a"] || keys["arrowleft"]) player.x -= player.speed;
   if (keys["d"] || keys["arrowright"]) player.x += player.speed;
 
-  // Joystick
   if (joystickEnabled) {
     player.x += joyX * player.speed;
     player.y += joyY * player.speed;
   }
 
-  // Limites
   player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
   player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
 }
